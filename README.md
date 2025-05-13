@@ -2,6 +2,10 @@
 
 FaceFindr is a powerful Python tool that uses facial recognition to automatically identify and organize photos containing specific faces. Originally designed for processing iCloud photo libraries, this tool can work with any collection of photos to help you quickly find pictures of specific people.
 
+## 🌊 Motivation
+
+This project was born out of a personal challenge - sorting through a massive 6GB collection of photos from my daughter's kindergarten WhatsApp group. Manually finding pictures of just my daughter among hundreds of class photos was incredibly time-consuming, which inspired the creation of FaceFindr as an automated solution.
+
 ## 🌟 Features
 
 - **Flexible Input Options**:

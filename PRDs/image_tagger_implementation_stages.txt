@@ -1,0 +1,166 @@
+# Image Tagging System Implementation Stages
+
+This document breaks down the implementation of the Image Tagging System into stages/components, each with a specific prompt for Cursor. The system is a web-based tool for tagging images from a directory (e.g., outputs from a face-matching script) to identify false positives and missed matches. It runs on a local Flask server, offers table and Tinder-like swipe modes, analyzes a face-matching log file for threshold suggestions, and exports tags to a CSV file. Each stage builds on the previous one, allowing gradual development and testing.
+
+## Stage 1: Project Setup and CLI Interface
+**Objective**: Set up the project structure, implement the CLI interface, and create basic Flask server functionality.
+**Prompt for Cursor**:
+I need you to create a Python script for the Image Tagging System that sets up the project structure and implements the CLI interface. The script should use Flask to run a local web server and handle command-line arguments as specified in the PRD below. Create a basic home page route (/) that displays a welcome message. Ensure the code is modular, well-documented, and follows Python best practices. Include error handling for invalid inputs and logging to a timestamped file. After implementation, explain the code structure and any key decisions.
+
+**PRD Excerpt**:
+- CLI Interface: `python image_tagger.py --input-dir <photo_dir> [--log-file <log.txt>] --port <port> --output <output_dir>`
+  - `--input-dir`: Path to the directory of images (required).
+  - `--log-file`: Path to the face-matching script’s log file (optional).
+  - `--port`: Web server port (default: 5000).
+  - `--output`: Base output directory for CSV and logs (default: `./tagging_results_<YYYYMMDD_HHMMSS>`).
+- Web Server: Run a local Flask server on the specified port, accessible at `http://localhost:<port>`.
+- Logging: Store logs in the output directory (e.g., `tagging_results_YYYYMMDD_HHMMSS/tagging_log.txt`) with timestamped entries.
+- Libraries: Use `Flask`, `argparse`, `logging`, `os`, `pathlib`, `datetime`.
+
+**Implementation Notes**:
+- Create directories: `templates/` for HTML, `static/` for CSS/JS, and output directory for logs/CSV.
+- Validate `--input-dir` (exists, contains images) and `--log-file` (exists, readable).
+- Set up Flask with a single route (/) returning a simple HTML page.
+- Initialize logging to a file in the output directory.
+- Output: Basic `image_tagger.py` and `templates/index.html`.
+
+## Stage 2: Image Loading and Thumbnail Generation
+**Objective**: Implement image loading from the input directory and generate thumbnails for previews.
+**Prompt for Cursor**:
+I need you to extend the Image Tagging System script to load images from the input directory and generate thumbnails for previews, as specified in the PRD. The script should support JPEG/PNG files, handle subdirectories (e.g., `matched`, `almost_matched`, `not_matched`), and pre-populate tags based on subdirectory names. Update the Flask server to display a list of loaded images on the home page. Ensure modularity, error handling (e.g., corrupted images), and logging. After implementation, explain how images are loaded, thumbnails are generated, and tags are pre-populated.
+
+**PRD Excerpt**:
+- Image Directory Input: Accept a directory with JPEG/PNG files, support subdirectories, and flatten the structure for tagging.
+- Pre-populate Tags: `matched`=True, `almost_matched`=False, `not_matched`=False.
+- Thumbnail Generation: Generate 100x100px thumbnails for previews, stored in the output directory.
+- Libraries: Use `Pillow` for image processing, `os`, `pathlib` for file handling.
+- Error Handling: Skip corrupted images with logged warnings.
+- Logging: Log the number of images loaded and any errors.
+
+**Implementation Notes**:
+- Extend `image_tagger.py` with a function to load images and generate thumbnails.
+- Store image metadata (filename, extension, thumbnail path, tag) in a list.
+- Update `templates/index.html` to list images with thumbnails and tags.
+- Create a thumbnail directory in the output directory (e.g., `tagging_results_YYYYMMDD_HHMMSS/thumbnails`).
+- Output: Updated `image_tagger.py`, modified `templates/index.html`.
+
+## Stage 3: Log File Parsing and Threshold Suggestion
+**Objective**: Implement parsing of the face-matching log file to suggest an optimal threshold.
+**Prompt for Cursor**:
+I need you to add log file parsing to the Image Tagging System to suggest an optimal threshold based on matching scores, as specified in the PRD. The script should read the face-matching log file (if provided), extract scores from `almost_matched` and `not_matched` entries, and suggest a threshold (e.g., median score). Display the suggestion on the home page. Ensure modularity, error handling (e.g., malformed logs), and logging of the suggestion. After implementation, explain the parsing logic, heuristic used, and how the suggestion is displayed.
+
+**PRD Excerpt**:
+- Log File Input: Accept an optional log file path, parse scores from entries like “[YYYY-MM-DD HH:MM:SS] INFO: Almost matched: image.jpg with 1 face(s) - Best match score 0.58”.
+- Threshold Suggestion: Use a heuristic (e.g., median score in `almost_matched`) to suggest a threshold.
+- Display: Show suggestion and explanation (e.g., “Suggested threshold: 0.55, based on median score in almost_matched”) on the web interface.
+- Libraries: Use `re` for parsing, `logging` for logging.
+- Error Handling: Handle missing or malformed log files with logged warnings.
+
+**Implementation Notes**:
+- Add a function to parse scores using regex (e.g., `r"Best match score (\d\.\d+)"` or `r"\((\d\.\d+)\)"`).
+- Calculate the median score as the threshold; store suggestion and explanation.
+- Update `templates/index.html` to display the threshold suggestion.
+- Log the parsing result and suggestion.
+- Output: Updated `image_tagger.py`, modified `templates/index.html`.
+
+## Stage 4: Table View Interface
+**Objective**: Implement the table view interface for batch tagging.
+**Prompt for Cursor**:
+I need you to implement the table view interface for the Image Tagging System, as specified in the PRD. The interface should display a Bootstrap table with image thumbnails, filenames, and tag dropdowns (Match/No Match). Support pre-populated tags, bulk tagging via checkboxes, and real-time progress indication. Include a “Save” button to export tags to CSV. Ensure the interface is responsive, handles large directories (e.g., lazy loading), and logs tagging actions. After implementation, explain the table structure, JavaScript functionality, and progress indication.
+
+**PRD Excerpt**:
+- Table View: Display columns for thumbnail (100x100px), filename (including subdirectory), tag (dropdown: Match/No Match).
+- Pre-populate Tags: Based on subdirectories (`matched`=True, others=False).
+- Bulk Tagging: Allow selecting multiple rows for tagging.
+- Progress Indication: Show “Tagged X/Y images” in a fixed header.
+- CSV Export: Save tags to `tagging_results_YYYYMMDD_HHMMSS.csv` with filename, extension, tag.
+- Libraries: Use `Bootstrap`, `Jinja2`, `jquery` for JavaScript.
+- Error Handling: Handle large directories with lazy loading.
+
+**Implementation Notes**:
+- Create `templates/table.html` with a Bootstrap table.
+- Add JavaScript (with jQuery) for tag updates, bulk tagging, and progress indication.
+- Implement a `/update_tag` POST route to update tags and progress.
+- Implement a `/save` POST route to export tags to CSV.
+- Add lazy loading (e.g., load 50 images initially, more on scroll).
+- Output: Updated `image_tagger.py`, new `templates/table.html`.
+
+## Stage 5: Tinder Mode Interface
+**Objective**: Implement the Tinder-like swipe mode for rapid tagging.
+**Prompt for Cursor**:
+I need you to implement the Tinder mode interface for the Image Tagging System, as specified in the PRD. The interface should display one image at a time, support swipe gestures (left for No Match, right for Match) or Yes/No buttons, and include an “Undo” button. Show pre-populated tags, real-time progress indication, and the threshold suggestion. Include a “Save” button for CSV export. Ensure responsiveness and logging of tagging actions. After implementation, explain the swipe functionality, undo mechanism, and progress indication.
+
+**PRD Excerpt**:
+- Tinder Mode: Display one image (scaled to fit), show filename and tag, support swipe gestures or buttons.
+- Undo: Revert the last tagging action.
+- Progress Indication: Show “Tagged X/Y images” in an overlay.
+- CSV Export: Same as table view.
+- Libraries: Use `Bootstrap`, `jquery`, `Hammer.js` for swipe gestures.
+- Error Handling: Ensure smooth transitions for large directories.
+
+**Implementation Notes**:
+- Create `templates/tinder.html` with a single-image display and buttons.
+- Use `Hammer.js` for swipe gestures; add Yes/No buttons as fallback.
+- Implement undo by storing the last action (filename, tag).
+- Reuse `/update_tag` and `/save` routes from table view.
+- Add progress indication in an overlay.
+- Output: Updated `image_tagger.py`, new `templates/tinder.html`.
+
+## Stage 6: CSV Export and Final Integration
+**Objective**: Finalize CSV export, integrate all components, and ensure full functionality.
+**Prompt for Cursor**:
+I need you to finalize the Image Tagging System by implementing CSV export and integrating all components (CLI, image loading, log parsing, table view, Tinder mode), as specified in the PRD. Ensure the CSV includes filename, extension, and true/false tags, saved to the output directory. Verify that all interfaces (table, Tinder) work seamlessly, progress indication is always visible, and the threshold suggestion is displayed. Add comprehensive error handling and logging. After implementation, explain the integration, CSV export logic, and any optimizations for large directories.
+
+**PRD Excerpt**:
+- CSV Export: Generate `tagging_results_YYYYMMDD_HHMMSS.csv` with columns: `filename`, `extension`, `tag`.
+- Integration: Ensure table and Tinder modes share tag data and progress.
+- Progress Indication: Always visible in both modes.
+- Error Handling: Handle corrupted images, large directories, invalid log files.
+- Logging: Log all actions (loading, tagging, export) to `tagging_results_YYYYMMDD_HHMMSS/tagging_log.txt`.
+
+**Implementation Notes**:
+- Finalize `/save` route to generate CSV with all tags.
+- Ensure TAGS dictionary is shared across routes and persists updates.
+- Test integration: Verify table and Tinder modes update tags correctly and save to CSV.
+- Optimize for large directories (e.g., efficient thumbnail serving, lazy loading).
+- Add comprehensive logging for all actions.
+- Output: Final `image_tagger.py`, updated templates, sample `requirements.txt`.
+
+## Stage 7: Testing and Documentation
+**Objective**: Test the system and provide documentation for setup and usage.
+**Prompt for Cursor**:
+I need you to test the Image Tagging System and provide documentation, as specified in the PRD. Test with directories of 10, 100, and 1,000 images, including subdirectories (`matched`, `almost_matched`, `not_matched`) and a sample log file. Verify table view, Tinder mode, CSV export, threshold suggestion, and progress indication. Handle edge cases (corrupted images, empty directories, malformed logs). Create a README with setup, run instructions, and sample commands. After implementation, explain the testing process, issues found, and documentation structure.
+
+**PRD Excerpt**:
+- Success Metrics: Load 1,000+ images in <5 seconds, tag 100 images/minute (table), 200 images/minute (Tinder), 95% CSV accuracy.
+- Error Handling: Handle edge cases without crashing.
+- Documentation: Provide setup/run instructions and sample commands.
+- Libraries: Ensure all dependencies are listed in `requirements.txt`.
+
+**Implementation Notes**:
+- Test with varied inputs and edge cases; log results.
+- Create `requirements.txt` with `flask`, `pillow`, `hammerjs` (via CDN).
+- Write a README with:
+  - Installation: `pip install -r requirements.txt`
+  - Run: `python image_tagger.py --input-dir photos --log-file log.txt --port 5000`
+  - Features: Table view, Tinder mode, threshold suggestion, CSV export.
+  - Troubleshooting: Common issues (e.g., missing dependencies, invalid inputs).
+- Output: Updated `image_tagger.py`, `requirements.txt`, `README.md`.
+
+---
+
+**Additional Notes**:
+- **Incremental Development**: Start with Stage 1 and test each stage before proceeding. Use the provided Python script as a reference but implement components gradually.
+- **Testing**: After each stage, test with a small directory (e.g., 10 images) and a sample log file (like the provided `log.txt`).
+- **Dependencies**: Install Flask (`pip install flask`), Pillow (`pip install pillow`), and ensure Bootstrap/Hammer.js are included via CDNs in HTML templates.
+- **Sample Log File**: Use the provided `log.txt` for testing threshold suggestion; it contains scores like 0.58, 0.52, etc.
+- **Output Directory**: Each run creates a new `tagging_results_YYYYMMDD_HHMMSS/` with CSV, log, and thumbnails.
+
+**Sample Commands for Cursor**:
+- Stage 1: `cursor image_tagger.py "Create a Flask-based CLI interface for the Image Tagging System with input-dir, log-file, port, and output arguments, plus a basic home page."`
+- Stage 2: `cursor image_tagger.py "Add image loading and thumbnail generation for JPEG/PNG files, supporting subdirectories and pre-populating tags."`
+
+**Next Steps**:
+- Start with Stage 1 in Cursor, using the provided prompt.
+- Share the output after each stage for review or debugging.
+- If you encounter issues, provide details (e.g., error messages, stage) for targeted assistance.

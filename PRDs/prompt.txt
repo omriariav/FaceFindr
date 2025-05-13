@@ -1,0 +1,101 @@
+Below is a prompt you can use in Cursor to develop the Python script based on the provided PRD. The prompt includes the PRD as a reference and provides clear instructions for implementation.
+I need you to develop a Python script based on the following Product Requirements Document (PRD). The script should fully implement the functionality described, including all functional and non-functional requirements. Use the `face_recognition` library for facial recognition, as it’s recommended in the PRD, and ensure the code is well-documented, modular, and follows Python best practices. Include error handling, logging, and a CLI interface as specified. After implementing the script, provide a brief explanation of the code structure and any key decisions made during development.
+
+Please reference the PRD below and ensure the script meets all requirements, including the ability to process a WhatsApp group chat export, handle either a single reference image or a directory of reference images for face matching, and move matched photos to a specified output directory.
+
+PRD is @prd.md 
+
+**Additional Instructions:**
+- Ensure the script is modular, with separate functions for parsing the WhatsApp export, processing reference images, performing face matching, and handling file operations.
+- Use the `face_recognition` library for simplicity, as recommended in the PRD.
+- Include a `requirements.txt` file listing all dependencies.
+- Provide a sample command to run the script (e.g., `python photo_matcher.py --export chat.txt --reference-dir ref_images --threshold 0.8 --output matched_photos`).
+- Test the script with edge cases (e.g., missing files, corrupted images, invalid reference images) to ensure robust error handling.
+- After implementation, explain the code structure, including how you organized the modules/functions and any optimizations or trade-offs made to meet performance requirements.
+
+Below is a prompt for Cursor that incorporates the updated PRD and provides clear instructions for developing the Python script based on the new requirements. The prompt highlights the changes from the previous PRD (shifting from WhatsApp group chat export to iCloud backup photos) and outlines the steps Cursor should take to implement the script.
+
+---
+
+**Prompt for Cursor:**
+
+I need you to develop a Python script based on the updated Product Requirements Document (PRD) provided below. The script should fully implement the functionality described, including all functional and non-functional requirements. The PRD has been updated to reflect a change in input source: instead of processing a WhatsApp group chat export, the script now accepts a directory of photos or a single photo file extracted from an iCloud backup. The script must compare these photos against a single reference image or a directory of reference images for face matching, as specified.
+
+Use the `face_recognition` library for facial recognition, as recommended in the PRD, and ensure the code is well-documented, modular, and follows Python best practices. Include error handling, logging, and a CLI interface as specified. After implementing the script, provide a brief explanation of the code structure, key decisions made during development, and how the updated requirements were addressed.
+
+**Updated PRD: 
+
+**Changes from Previous PRD:**
+- The original PRD required the script to process a WhatsApp group chat export (text file and media folder). This has been replaced with accepting a directory of photos (`--input-dir`) or a single photo file (`--input-file`) extracted from an iCloud backup.
+- The CLI interface has been updated to use `--input-dir` and `--input-file` instead of `--export`.
+- Parsing of a WhatsApp chat export text file has been removed, as the input is now a simple directory or file.
+- The title has been updated to "iCloud Photo Face Matching Script" to reflect the new context.
+- All other functionality (face detection, matching, reference image handling, logging, etc.) remains unchanged.
+
+**Steps to Implement the Script:**
+
+1. **Set Up the Project**:
+   - Create a Python script (`photo_matcher.py`) compatible with Python 3.8+.
+   - Generate a `requirements.txt` file with dependencies: `face_recognition`, `Pillow` (for image handling), and any other necessary libraries.
+   - Ensure the script uses `face_recognition` for face detection and matching, as recommended.
+
+2. **Implement CLI Interface**:
+   - Use `argparse` to handle CLI arguments: `--input-dir`, `--input-file`, `--reference`, `--reference-dir`, `--threshold`, and `--output`.
+   - Ensure `--input-dir` and `--input-file` are mutually exclusive, as are `--reference` and `--reference-dir`.
+   - Set default values (e.g., threshold=0.8, output=`./matched_photos`).
+
+3. **Handle Input Validation**:
+   - Validate input paths: check if `--input-dir` exists and contains at least one JPEG/PNG file, or if `--input-file` is a valid JPEG/PNG file.
+   - Validate reference inputs: ensure `--reference` or `--reference-dir` contains images with exactly one detectable face.
+   - Log validation errors and exit gracefully if inputs are invalid (e.g., empty directory, corrupted files).
+
+4. **Process Reference Images**:
+   - For a single reference image (`--reference`), load the image and extract its facial encoding using `face_recognition`.
+   - For a reference directory (`--reference-dir`), iterate through all JPEG/PNG files, extract facial encodings, and store them in a list.
+   - Validate that each reference image has exactly one face; skip invalid images with logged warnings.
+
+5. **Process Input Photos**:
+   - For a single input file (`--input-file`), load and process the image.
+   - For an input directory (`--input-dir`), iterate through all JPEG/PNG files in the directory.
+   - For each image, detect faces using `face_recognition` and skip images with no faces.
+   - Compare detected face encodings against reference encodings, using the user-specified threshold.
+   - If any reference encoding matches, copy the image to the output directory.
+
+6. **File Handling**:
+   - Use `shutil.copy` to copy matched photos to the output directory, preserving original filenames.
+   - Create the output directory if it doesn’t exist using `os.makedirs`.
+   - Ensure original files are not modified or deleted.
+
+7. **Logging and Output**:
+   - Set up a logging system using the `logging` module to write to `photo_match_log.txt` with timestamped entries.
+   - Log actions: files processed, faces detected, matches found (including which reference image matched), and errors.
+   - Display a CLI summary at the end: total photos processed, matches found, and errors encountered.
+
+8. **Error Handling**:
+   - Handle edge cases: corrupted images, missing files, invalid formats, multiple faces in reference images, empty directories.
+   - Skip problematic files with logged warnings instead of crashing.
+   - Provide clear error messages for invalid inputs (e.g., “No valid images found in input directory”).
+
+9. **Optimize Performance**:
+   - Process images in batches if memory usage is high, especially for large input directories.
+   - Limit reference directory size to 100 images, as specified.
+   - Provide progress updates in the CLI (e.g., “Processed 100/1000 images”).
+
+10. **Test and Document**:
+    - Test the script with various inputs: single photo, small and large directories, valid and invalid reference images.
+    - Include edge cases: empty directories, corrupted files, images with no faces or multiple faces.
+    - Add docstrings and comments to explain the code’s functionality.
+    - Provide a sample command in the documentation (e.g., `python photo_matcher.py --input-dir photos --reference-dir ref_images --threshold 0.8 --output matched_photos`).
+
+**Additional Instructions:**
+- Ensure the script is modular, with separate functions for input validation, reference image processing, face matching, file operations, and logging.
+- Include a `requirements.txt` file listing all dependencies.
+- After implementation, explain:
+  - The code structure (e.g., modules/functions used).
+  - How the shift from WhatsApp export to iCloud photos was handled (e.g., simplified input processing).
+  - Any optimizations or trade-offs made to meet performance requirements (e.g., batch processing).
+  - How error handling ensures reliability for edge cases.
+
+---
+
+This prompt clearly communicates the updated PRD, highlights the key changes, and provides a structured plan for Cursor to implement the script. You can paste this directly into Cursor to generate the script. Let me know if you need further refinements, want the actual script generated, or have additional requirements!

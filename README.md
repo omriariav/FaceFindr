@@ -143,7 +143,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 📧 Contact
 
-If you have any questions or suggestions, please open an issue on GitHub.
+If you have any questions or suggestions, please open an issue on GitHub. 
+You can also send me an email - omri.ariav at gmail dot com
 
 ---
 
